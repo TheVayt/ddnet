@@ -90,9 +90,12 @@ void CCamera::OnRender()
 
 	if(!(m_pClient->m_Snap.m_SpecInfo.m_Active || GameClient()->m_GameInfo.m_AllowZoom || Client()->State() == IClient::STATE_DEMOPLAYBACK))
 	{
-		m_ZoomSet = false;
-		m_Zoom = 1.0f;
-		m_Zooming = false;
+		if (m_ZoomSet)
+		{
+			m_ZoomSet = false;
+			m_Zoom = 1.0f;
+			m_Zooming = false;
+		}
 	}
 	else if(!m_ZoomSet && g_Config.m_ClDefaultZoom != 10)
 	{
@@ -154,27 +157,24 @@ void CCamera::OnConsoleInit()
 
 void CCamera::OnReset()
 {
-	m_Zoom = pow(ZoomStep, g_Config.m_ClDefaultZoom - 10);
+	bool LegalZoom = (m_pClient->m_Snap.m_SpecInfo.m_Active || GameClient()->m_GameInfo.m_AllowZoom || Client()->State() == IClient::STATE_DEMOPLAYBACK);
+	m_Zoom = pow(ZoomStep, LegalZoom ? g_Config.m_ClDefaultZoom - 10 : 0);
 	m_Zooming = false;
 }
 
 void CCamera::ConZoomPlus(IConsole::IResult *pResult, void *pUserData)
 {
 	CCamera *pSelf = (CCamera *)pUserData;
-	if(pSelf->m_pClient->m_Snap.m_SpecInfo.m_Active || pSelf->GameClient()->m_GameInfo.m_AllowZoom || pSelf->Client()->State() == IClient::STATE_DEMOPLAYBACK)
-	{
-		pSelf->ScaleZoom(ZoomStep);
-	}
+	pSelf->ScaleZoom(ZoomStep);
 }
 void CCamera::ConZoomMinus(IConsole::IResult *pResult, void *pUserData)
 {
 	CCamera *pSelf = (CCamera *)pUserData;
-	if(pSelf->m_pClient->m_Snap.m_SpecInfo.m_Active || pSelf->GameClient()->m_GameInfo.m_AllowZoom || pSelf->Client()->State() == IClient::STATE_DEMOPLAYBACK)
-	{
-		pSelf->ScaleZoom(1 / ZoomStep);
-	}
+	pSelf->ScaleZoom(1 / ZoomStep);
 }
 void CCamera::ConZoomReset(IConsole::IResult *pResult, void *pUserData)
 {
-	((CCamera *)pUserData)->ChangeZoom(pow(ZoomStep, g_Config.m_ClDefaultZoom - 10));
+	CCamera *pSelf = (CCamera *)pUserData;
+	bool LegalZoom = (pSelf->m_pClient->m_Snap.m_SpecInfo.m_Active || pSelf->GameClient()->m_GameInfo.m_AllowZoom || pSelf->Client()->State() == IClient::STATE_DEMOPLAYBACK);
+	pSelf->ChangeZoom(pow(ZoomStep, LegalZoom ? g_Config.m_ClDefaultZoom - 10 : 0));
 }
